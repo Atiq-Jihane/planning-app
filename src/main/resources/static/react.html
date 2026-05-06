@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+    <script src="team.js" type="text/babel"></script>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #e3f2fd, #ffffff);
+            margin: 0;
+        }
+
+        .layout {
+            display: flex;
+            gap: 30px;
+            padding: 20px;
+        }
+
+        .sidebar {
+            width: 220px;
+            position: sticky;
+            top: 20px;
+            align-self: flex-start;
+        }
+
+        .main {
+            flex: 1;
+            text-align: center;
+        }
+
+        .header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        button {
+            padding: 10px 15px;
+            border-radius: 10px;
+            border: none;
+            background: #2962ff;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        button:hover {
+            background: #0039cb;
+            transform: scale(1.05);
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 25px;
+        }
+
+        .nav-tab {
+            padding: 10px 24px;
+            border-radius: 12px;
+            border: none;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .nav-tab.active {
+            background: #2962ff;
+            color: white;
+            box-shadow: 0 4px 14px rgba(41,98,255,0.4);
+            transform: scale(1.05);
+        }
+
+        .nav-tab.inactive {
+            background: white;
+            color: #555;
+        }
+
+        .nav-tab.inactive:hover {
+            background: #f0f4ff;
+            transform: scale(1.02);
+        }
+
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+            max-width: 720px;
+            margin: 20px auto;
+        }
+
+        .day-header {
+            font-weight: 600;
+            font-size: 13px;
+            padding: 6px 0;
+            color: #333;
+        }
+
+        .day-header.weekend { color: #9575cd; }
+
+        .cell {
+            height: 70px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            padding: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: 0.2s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            position: relative;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .cell:hover { transform: scale(1.02); }
+
+        .cell-empty {
+            height: 70px;
+            border-radius: 12px;
+            background: transparent;
+            box-shadow: none;
+        }
+
+        .selected {
+            border: 3px solid #1a237e !important;
+            transform: scale(1.08);
+        }
+
+        .today {
+            border: 3px solid #2962ff;
+            box-shadow: 0 0 14px rgba(41,98,255,0.45);
+        }
+
+        .today-badge {
+            position: absolute;
+            top: 5px;
+            right: 7px;
+            font-size: 9px;
+            background: #2962ff;
+            color: white;
+            border-radius: 5px;
+            padding: 1px 5px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+
+        select {
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 16px;
+            border: 2px solid #ccc;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        select:hover { border-color: #2962ff; }
+
+        .stats {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+
+        .stat-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .stat-box {
+            padding: 10px;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .message {
+            margin-top: 10px;
+            color: green;
+            font-weight: bold;
+            animation: fade 1.5s ease;
+        }
+
+        @keyframes fade {
+            0% { opacity: 0; }
+            20% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        /* ── BILAN CARDS ─────────────────────────────────────── */
+        .bilan-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .bilan-card {
+            background: white;
+            border-radius: 18px;
+            padding: 22px 20px 18px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .bilan-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 28px rgba(0,0,0,0.13);
+        }
+
+        .bilan-card-icon {
+            font-size: 28px;
+            line-height: 1;
+        }
+
+        .bilan-card .label {
+            font-size: 11px;
+            color: #888;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .bilan-card .value {
+            font-size: 38px;
+            font-weight: 900;
+            line-height: 1;
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+        }
+
+        .bilan-card .value-unit {
+            font-size: 16px;
+            font-weight: 500;
+            color: #aaa;
+        }
+
+        .bilan-card .sublabel {
+            font-size: 11px;
+            color: #bbb;
+            margin-top: -4px;
+        }
+
+        .progress-bar-bg {
+            height: 6px;
+            border-radius: 6px;
+            background: #f0f0f0;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+        }
+
+        .bilan-card-alert {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 20px;
+            letter-spacing: 0.3px;
+        }
+
+        .bilan-card-bg-icon {
+            position: absolute;
+            bottom: -10px;
+            right: -6px;
+            font-size: 72px;
+            opacity: 0.06;
+            pointer-events: none;
+            line-height: 1;
+        }
+
+        /* ── MONTH TABLE ─────────────────────────────────────── */
+        .month-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        }
+
+        .month-table th {
+            background: #2962ff;
+            color: white;
+            padding: 14px 10px;
+            font-size: 13px;
+        }
+
+        .month-table td {
+            padding: 10px;
+            text-align: center;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 13px;
+        }
+
+        .month-table tr:hover td { background: #f5f8ff; }
+
+        .month-table tr.total-row td {
+            background: #1a237e;
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+            border-bottom: none;
+        }
+
+        .month-table .month-name {
+            font-weight: 600;
+            text-align: left;
+            padding-left: 16px;
+            color: #333;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+        }
+
+        /* cellule colorée en fond doux */
+
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .bilan-card { animation: slideUp 0.4s ease both; }
+        .bilan-card:nth-child(1) { animation-delay: 0.05s; }
+        .bilan-card:nth-child(2) { animation-delay: 0.10s; }
+        .bilan-card:nth-child(3) { animation-delay: 0.15s; }
+        .bilan-card:nth-child(4) { animation-delay: 0.20s; }
+        .bilan-card:nth-child(5) { animation-delay: 0.25s; }
+        .bilan-card:nth-child(6) { animation-delay: 0.30s; }
+    </style>
+</head>
+
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+
+    function App() {
+        const [users, setUsers] = React.useState([]);
+
+        const STATUSES = [
+            { code: "P",   label: "Présent" },
+            { code: "PP",  label: "Permanence" },
+            { code: "N",   label: "Travail / Nuit" },
+            { code: "TT",  label: "Télétravail" },
+            { code: "TT2", label: "1/2 TT" },
+            { code: "TP",  label: "Déplacement / Voyage pro" },
+            { code: "ZZ",  label: "OFF" },
+            { code: "Z2",  label: "1/2 OFF" },
+            { code: "CX",  label: "Congés" },
+            { code: "C4",  label: "Congés validés" },
+            { code: "RJ",  label: "RTT validé" },
+            { code: "R2",  label: "1/2 RTT validé" },
+            { code: "FC",  label: "Férié" },
+            { code: "FR",  label: "Férié récupéré" },
+            { code: "EF",  label: "Événement Famille" },
+            { code: "MA",  label: "Maladie" },
+            { code: "MT",  label: "Mi-temps thérapeutique" },
+            { code: "EM",  label: "Enfant malade" },
+            { code: "FO",  label: "Formation" },
+            { code: "FJ",  label: "Formation jour" },
+            { code: "AT",  label: "Accident travail" }
+        ];
+
+        const MONTHS = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+
+        const [equipe, setEquipe]             = React.useState("");
+        const [planning, setPlanning]         = React.useState([]);
+        const [stats, setStats]               = React.useState({});
+        const [monthlyStats, setMonthlyStats] = React.useState([]);
+        const [selected, setSelected]         = React.useState(null);
+        const [message, setMessage]           = React.useState("");
+        const [email, setEmail]               = React.useState("");
+        const [isLogged, setIsLogged]         = React.useState(false);
+        const [loginEmail, setLoginEmail]     = React.useState("");
+        const [loginErr, setLoginErr]         = React.useState("");
+        const [loginLoading, setLoginLoading] = React.useState(false);
+        const [currentUser, setCurrentUser]   = React.useState(null);
+        const [year, setYear]                 = React.useState(2026);
+        const [month, setMonth]               = React.useState(5);
+        const [activePage, setActivePage]     = React.useState("planning");
+        const [sessionChecked, setSessionChecked] = React.useState(false);
+
+        const today = new Date().toISOString().split("T")[0];
+
+        const yearStats = React.useMemo(() => {
+            if (!monthlyStats.length) return {};
+            return monthlyStats.reduce((acc, ms) => {
+                Object.keys(ms).forEach(k => {
+                    if (k !== "month") acc[k] = (acc[k] || 0) + (ms[k] || 0);
+                });
+                return acc;
+            }, {});
+        }, [monthlyStats]);
+
+        // ── Vérifier session existante au chargement ──
+        React.useEffect(() => {
+            fetch("/api/auth/me", { credentials: "include" })
+                .then(r => r.ok ? r.json() : null)
+                .then(data => {
+                    if (data?.email) {
+                        setEmail(data.email);
+                        setEquipe(data.equipe);
+                        setCurrentUser(data);
+                        setIsLogged(true);
+                    }
+                })
+                .finally(() => setSessionChecked(true));
+            fetch("/users").then(r => r.json()).then(setUsers).catch(() => {});
+        }, []);
+
+        React.useEffect(() => {
+            if (!isLogged || !email) return;
+            loadPlanning();
+            loadStats();
+            setSelected(null);
+        }, [month, year, email, isLogged]);
+
+        React.useEffect(() => {
+            if (!isLogged || !email) return;
+            loadMonthlyStats();
+        }, [year, email, isLogged]);
+
+        React.useEffect(() => {
+            if (!stats || Object.keys(stats).length === 0) return;
+            if (!isLogged) return;
+
+            const drawChart = () => {
+                const ctx = document.getElementById("myChart");
+                if (!ctx) { setTimeout(drawChart, 50); return; }
+                Chart.register(ChartDataLabels);
+                if (window.myChartInstance) window.myChartInstance.destroy();
+                window.myChartInstance = new Chart(ctx, {
+                    type: "pie",
+                    data: {
+                        labels: ["TT", "Congés", "RTT", "OFF"],
+                        datasets: [{
+                            data: [stats.TT || 0, stats.CX || 0, stats.RJ || 0, stats.ZZ || 0],
+                            backgroundColor: ["#2962ff", "#00c853", "#ffd600", "#757575"]
+                        }]
+                    },
+                    options: {
+                        plugins: {
+                            legend: { position: "bottom" },
+                            datalabels: {
+                                color: "white",
+                                font: { weight: "bold", size: 12 },
+                                formatter: (value, context) => {
+                                    let total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                    return total ? ((value / total) * 100).toFixed(0) + "%" : "";
+                                }
+                            }
+                        }
+                    }
+                });
+            };
+            setTimeout(drawChart, 150);
+        }, [stats, activePage, isLogged]);
+
+        const loadPlanning = () => {
+            fetch(`/planning?email=${email}&year=${year}&month=${month}`)
+                .then(res => res.json()).then(setPlanning);
+        };
+
+        const loadStats = () => {
+            fetch(`/planning/stats?email=${email}&year=${year}&month=${month}`)
+                .then(res => res.json()).then(setStats);
+        };
+
+        const loadMonthlyStats = () => {
+            const promises = Array.from({length: 12}, (_, i) =>
+                fetch(`/planning/stats?email=${email}&year=${year}&month=${i+1}`)
+                    .then(res => res.json())
+                    .then(data => ({ month: i + 1, ...data }))
+            );
+            Promise.all(promises).then(setMonthlyStats);
+        };
+
+        const updateStatus = (p, status) => {
+            // status vide = effacer
+            fetch("/planning", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ...p, email, status: status || "", equipe })
+            }).then(() => {
+                setMessage(status ? "Enregistré !" : "Effacé !");
+                setTimeout(() => setMessage(""), 1500);
+                loadPlanning();
+                loadStats();
+                loadMonthlyStats();
+                if (!status) setSelected(null);
+            });
+        };
+        const getColor = (s) => {
+            switch(s) {
+                case "P":   return "#90caf9";
+                case "PP":  return "#64b5f6";
+                case "N":   return "#42a5f5";
+                case "TT":  return "#2962ff";
+                case "TT2": return "#5c6bc0";
+                case "TP":  return "#7986cb";
+                case "ZZ":  return "#757575";
+                case "Z2":  return "#9e9e9e";
+                case "CX":  return "#00c853";
+                case "C4":  return "#00e676";
+                case "RJ":  return "#ffd600";
+                case "R2":  return "#fff176";
+                case "FC":  return "#d32f2f";
+                case "FR":  return "#ef5350";
+                case "EF":  return "#e57373";
+                case "MA":  return "#8e24aa";
+                case "MT":  return "#ab47bc";
+                case "EM":  return "#ce93d8";
+                case "FO":  return "#fb8c00";
+                case "FJ":  return "#ffb74d";
+                case "AT":  return "#ff7043";
+                default:    return null;
+            }
+        };
+
+        const isWeekend = (dateStr) => {
+            const d = new Date(dateStr + "T00:00:00").getDay();
+            return d === 0 || d === 6;
+        };
+
+        const getCellBackground = (p) => {
+            const color = getColor(p.status);
+            return color || (isWeekend(p.date) ? "#ede7f6" : "#f5f7fa");
+        };
+
+        const getDay = (date) => new Date(date + "T00:00:00").getDate();
+        const daysInMonth = new Date(year, month, 0).getDate();
+
+        const getFirstDayOffset = () => {
+            const d = new Date(year, month - 1, 1).getDay();
+            return d === 0 ? 6 : d - 1;
+        };
+
+        const emptyCells  = Array.from({ length: getFirstDayOffset() }, () => null);
+        const fullCalendar = Array.from({ length: daysInMonth }, (_, i) => {
+            const day = i + 1;
+            const existing = planning.find(p => getDay(p.date) === day);
+            return existing || {
+                date: `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`,
+                status: ""
+            };
+        });
+
+        const getCurrentWeekDays = () => {
+            const now = new Date();
+            const day = now.getDay();
+            const diff = day === 0 ? -6 : 1 - day;
+            const monday = new Date(now);
+            monday.setDate(now.getDate() + diff);
+            return Array.from({length: 7}, (_, i) => {
+                const d = new Date(monday);
+                d.setDate(monday.getDate() + i);
+                return d.toISOString().split('T')[0];
+            });
+        };
+
+        // ─── PAGE CONNEXION ───────────────────────────────────────────────────────
+        const handleLogin = () => {
+            setLoginErr("");
+            setLoginLoading(true);
+            fetch("/api/auth/login", {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: loginEmail })
+            })
+                .then(r => r.json().then(data => ({ ok: r.ok, data })))
+                .then(({ ok, data }) => {
+                    if (ok) {
+                        setEmail(data.email);
+                        setEquipe(data.equipe);
+                        setCurrentUser(data);
+                        setIsLogged(true);
+                        fetch("/users").then(r => r.json()).then(setUsers).catch(() => {});
+                    } else {
+                        setLoginErr(data.error || "Email introuvable.");
+                    }
+                })
+                .catch(() => setLoginErr("Erreur réseau, vérifiez le serveur."))
+                .finally(() => setLoginLoading(false));
+        };
+
+        if (!sessionChecked) {
+            return <div style={{ height:"100vh", display:"flex", alignItems:"center", justifyContent:"center", color:"#999" }}>Chargement…</div>;
+        }
+
+        if (!isLogged) {
+            return (
+                <div style={{ height:"100vh", display:"flex", justifyContent:"center", alignItems:"center", background:"linear-gradient(135deg,#e3f2fd,#ffffff)" }}>
+                    <div style={{
+                        background:"white", padding:"44px", borderRadius:"24px",
+                        boxShadow:"0 10px 40px rgba(0,0,0,0.12)", display:"flex",
+                        flexDirection:"column", alignItems:"center", gap:"18px",
+                        minWidth:"340px", maxWidth:"400px", width:"100%"
+                    }}>
+                        <div style={{ fontSize:"48px" }}>📋</div>
+                        <h1 style={{ fontSize:"26px", fontWeight:"800", margin:0, color:"#1a237e" }}>Planning App</h1>
+                        <p style={{ color:"#888", margin:0, fontSize:"14px" }}>Entrez votre adresse email pour accéder à votre planning</p>
+
+                        <input
+                            type="email"
+                            placeholder="votre.email@disney.com"
+                            value={loginEmail}
+                            onChange={e => setLoginEmail(e.target.value)}
+                            onKeyDown={e => e.key === "Enter" && handleLogin()}
+                            autoFocus
+                            style={{
+                                width:"100%", padding:"13px 16px", borderRadius:"12px",
+                                border:"2px solid #e0e0e0", fontSize:"15px", outline:"none",
+                                fontFamily:"inherit", boxSizing:"border-box",
+                                transition:"border-color 0.2s"
+                            }}
+                            onFocus={e => e.target.style.borderColor="#2962ff"}
+                            onBlur={e => e.target.style.borderColor="#e0e0e0"}
+                        />
+
+                        {loginErr && (
+                            <div style={{ color:"#e53935", fontSize:"13px", fontWeight:"600", textAlign:"center" }}>
+                                ⚠ {loginErr}
+                            </div>
+                        )}
+
+                        <button
+                            onClick={handleLogin}
+                            disabled={!loginEmail || loginLoading}
+                            style={{
+                                width:"100%", padding:"13px", borderRadius:"12px",
+                                background: loginEmail ? "#2962ff" : "#9bb3ff",
+                                color:"white", border:"none", fontWeight:"bold", fontSize:"15px",
+                                cursor: loginEmail ? "pointer" : "not-allowed",
+                                boxShadow:"0 4px 12px rgba(41,98,255,0.3)", transition:"0.2s"
+                            }}>
+                            {loginLoading ? "Connexion…" : "Se connecter →"}
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        // ─── VUE PLANNING ─────────────────────────────────────────────────────────
+        const VuePlanning = () => {
+            const weekDays = getCurrentWeekDays();
+            const labels   = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"];
+
+            const now = new Date();
+            const isCurrentMonth = month === (now.getMonth() + 1) && year === now.getFullYear();
+
+            const goToToday = () => {
+                setMonth(now.getMonth() + 1);
+                setYear(now.getFullYear());
+            };
+
+            // Stats sidebar avec jauges
+            const sidebarStats = [
+                { label:"TT",      val: stats.TT  || 0, color:"#2962ff", max:20 },
+                { label:"Congés",  val: stats.CX  || 0, color:"#00c853", max:25 },
+                { label:"RTT",     val: stats.RJ  || 0, color:"#f9a800", max:12, dark:true },
+                { label:"C4",      val: stats.C4  || 0, color:"#ff6d00", max:10 },
+                { label:"OFF",     val: stats.ZZ  || 0, color:"#546e7a", max:10 },
+            ];
+
+            return (
+                <div className="layout">
+                    {/* ── SIDEBAR ── */}
+                    <div className="sidebar">
+                        <div style={{
+                            background:"white", borderRadius:"14px", padding:"14px",
+                            marginBottom:"14px", boxShadow:"0 2px 12px rgba(0,0,0,0.08)"
+                        }}>
+                            <h4 style={{ textAlign:"center", margin:"0 0 10px", fontSize:"14px", color:"#555" }}>📊 Répartition du mois</h4>
+                            <canvas id="myChart" style={{ width:"100%" }}></canvas>
+                        </div>
+
+                        <div style={{
+                            background:"white", borderRadius:"14px", padding:"16px",
+                            boxShadow:"0 2px 12px rgba(0,0,0,0.08)"
+                        }}>
+                            <h4 style={{ margin:"0 0 14px", fontSize:"14px", color:"#555" }}>📅 {MONTHS[month-1]} {year}</h4>
+                            <div style={{ display:"flex", flexDirection:"column", gap:"12px" }}>
+                                {sidebarStats.map(s => {
+                                    const pct = Math.min(100, Math.round((s.val / s.max) * 100));
+                                    return (
+                                        <div key={s.label}>
+                                            <div style={{ display:"flex", justifyContent:"space-between", marginBottom:"4px" }}>
+                                                <span style={{ fontSize:"12px", fontWeight:"600", color:"#555" }}>{s.label}</span>
+                                                <span style={{ fontSize:"13px", fontWeight:"800", color: s.color }}>{s.val}j</span>
+                                            </div>
+                                            <div style={{ height:"6px", borderRadius:"6px", background:"#f0f0f0", overflow:"hidden" }}>
+                                                <div style={{
+                                                    height:"100%", borderRadius:"6px",
+                                                    width: pct + "%", background: s.color,
+                                                    transition:"width 0.6s ease"
+                                                }}/>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            {message && <div className="message">{message}</div>}
+                        </div>
+                    </div>
+
+                    {/* ── MAIN ── */}
+                    <div className="main">
+                        <h2 style={{ marginBottom:"10px" }}>
+                            Bonjour {currentUser ? `${currentUser.prenom} ${currentUser.nom}` : ""} 👋
+                        </h2>
+
+                        {/* ── SEMAINE EN COURS ── */}
+                        <div style={{
+                            background:"white", borderRadius:"14px", padding:"14px 16px",
+                            margin:"10px auto 20px", maxWidth:"700px",
+                            boxShadow:"0 2px 10px rgba(0,0,0,0.08)"
+                        }}>
+                            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"10px" }}>
+                                <h4 style={{ margin:0, fontSize:"14px", color:"#555" }}>🗓️ Cette semaine</h4>
+                            </div>
+                            <div style={{ display:"grid", gridTemplateColumns:"repeat(7,1fr)", gap:"6px" }}>
+                                {weekDays.map((date, i) => {
+                                    const entry   = planning.find(p => p.date === date);
+                                    const status  = entry?.status || "";
+                                    const isToday = date === today;
+                                    const isWE    = i >= 5;
+                                    const color   = getColor(status);
+                                    const isLight = !status || status === "RJ" || status === "R2";
+                                    return (
+                                        <div key={date} style={{
+                                            borderRadius:"10px",
+                                            padding:"8px 4px",
+                                            background: color || (isWE ? "#f3eeff" : "#f5f7fa"),
+                                            color: isLight ? "#444" : "white",
+                                            textAlign:"center",
+                                            border: isToday ? "2px solid #2962ff" : "2px solid transparent",
+                                            boxShadow: isToday ? "0 0 12px rgba(41,98,255,0.25)" : "none",
+                                            transition:"0.2s"
+                                        }}>
+                                            <div style={{ fontSize:"9px", fontWeight:"600", opacity:0.6, textTransform:"uppercase", letterSpacing:"0.5px" }}>{labels[i]}</div>
+                                            <div style={{ fontSize:"15px", fontWeight:"800", margin:"4px 0 2px" }}>
+                                                {new Date(date + "T00:00:00").getDate()}
+                                            </div>
+                                            <div style={{ fontSize:"10px", fontWeight:"bold" }}>
+                                                {status || (isWE ? "🌙" : "—")}
+                                            </div>
+                                            {isToday && (
+                                                <div style={{ fontSize:"8px", marginTop:"4px", background:"#2962ff", color:"white", borderRadius:"4px", padding:"1px 4px", display:"inline-block" }}>
+                                                    Auj.
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* ── NAVIGATION MOIS ── */}
+                        <div className="header" style={{ marginBottom:"10px" }}>
+                            <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
+                                <button
+                                    onClick={() => { const d = new Date(year, month-2, 1); setMonth(d.getMonth()+1); setYear(d.getFullYear()); }}
+                                    style={{ padding:"8px 14px", fontSize:"16px", borderRadius:"10px", background:"white", color:"#2962ff", border:"2px solid #e0e0e0", boxShadow:"none" }}>
+                                    ‹
+                                </button>
+                                <select value={month} onChange={(e) => setMonth(parseInt(e.target.value))}
+                                        style={{ padding:"10px 14px", fontSize:"15px" }}>
+                                    {MONTHS.map((m, i) => <option key={i} value={i+1}>{m}</option>)}
+                                </select>
+                                <select value={year} onChange={(e) => setYear(parseInt(e.target.value))}
+                                        style={{ padding:"10px 14px", fontSize:"15px" }}>
+                                    {[2024,2025,2026,2027].map(y => <option key={y} value={y}>{y}</option>)}
+                                </select>
+                                <button
+                                    onClick={() => { const d = new Date(year, month, 1); setMonth(d.getMonth()+1); setYear(d.getFullYear()); }}
+                                    style={{ padding:"8px 14px", fontSize:"16px", borderRadius:"10px", background:"white", color:"#2962ff", border:"2px solid #e0e0e0", boxShadow:"none" }}>
+                                    ›
+                                </button>
+                                {!isCurrentMonth && (
+                                    <button onClick={goToToday}
+                                            style={{ padding:"8px 16px", fontSize:"13px", borderRadius:"10px", background:"#2962ff", color:"white", fontWeight:"bold", border:"none" }}>
+                                        Aujourd'hui
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* ── CALENDRIER ── */}
+                        <div className="calendar">
+                            {["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"].map((d, i) => (
+                                <div key={d} className={"day-header" + (i >= 5 ? " weekend" : "")}>{d}</div>
+                            ))}
+
+                            {emptyCells.map((_, i) => <div key={"empty-"+i} className="cell-empty" />)}
+
+                            {fullCalendar.map((p, i) => {
+                                const isSelected = selected && selected.date === p.date;
+                                const isToday    = p.date === today;
+                                const weekend    = isWeekend(p.date);
+                                let className    = "cell";
+                                if (isSelected) className += " selected";
+                                if (isToday && !isSelected) className += " today";
+
+                                return (
+                                    <div key={i} className={className}
+                                         style={{
+                                             background: getCellBackground(p),
+                                             color: (p.status === "RJ" || p.status === "R2" || !p.status) ? "#333" : "white",
+                                             opacity: weekend && !p.status ? 0.75 : 1,
+                                             minHeight:"78px"
+                                         }}
+                                         onClick={() => setSelected(selected?.date === p.date ? null : p)}
+                                    >
+                                        {isToday && <span className="today-badge">Auj.</span>}
+                                        <div style={{ fontSize:"13px", fontWeight:"bold" }}>{getDay(p.date)}</div>
+                                        <div style={{ fontSize:"11px", marginTop:"4px", fontWeight:"bold" }}>
+                                            {(p.status && isNaN(p.status)) ? p.status : (weekend ? "🌙" : "")}
+                                        </div>
+                                        {isSelected && (
+                                            <div onClick={e => e.stopPropagation()} style={{ width:"100%", marginTop:"6px" }}>
+                                                <select value={p.status || ""}
+                                                        onChange={(e) => updateStatus(p, e.target.value)}
+                                                        style={{ width:"100%", borderRadius:"6px", padding:"3px", fontSize:"11px", color:"#333" }}>
+                                                    <option value="">— Effacer —</option>
+                                                    {STATUSES.map(s => (
+                                                        <option key={s.code} value={s.code}>{s.code} - {s.label}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+
+                    </div>
+                </div>
+            );
+        };
+
+        // ─── VUE BILAN ANNUEL ─────────────────────────────────────────────────────
+        const VueBilan = () => {
+            const totalTT  = yearStats.TT  || 0;
+            const totalCX  = (yearStats.CX || 0) + (yearStats.C4 || 0);
+            const totalRTT = (yearStats.RJ || 0) + (yearStats.R2 || 0);
+            const totalMA  = yearStats.MA  || 0;
+            const totalFO  = (yearStats.FO || 0) + (yearStats.FJ || 0);
+            const totalZZ  = yearStats.ZZ  || 0;
+
+            const bilanCards = [
+                { label:"Télétravail", value: totalTT,  color:"#2962ff", max:120, icon:"💻" },
+                { label:"Congés",      value: totalCX,  color:"#00c853", max:25,  icon:"🏖️" },
+                { label:"RTT",         value: totalRTT, color:"#f9a800", max:12,  icon:"🟡" },
+                { label:"Maladie",     value: totalMA,  color:"#8e24aa", max:30,  icon:"🤒" },
+                { label:"Formation",   value: totalFO,  color:"#fb8c00", max:20,  icon:"📚" },
+                { label:"OFF",         value: totalZZ,  color:"#546e7a", max:30,  icon:"⚫" },
+            ];
+
+            // Seuil d'alerte : 80%
+            const getAlert = (value, max) => {
+                const pct = (value / max) * 100;
+                if (pct >= 100) return { text:"Plafond atteint", bg:"#ffebee", color:"#c62828" };
+                if (pct >= 80)  return { text:"Proche du plafond", bg:"#fff8e1", color:"#f57f17" };
+                return null;
+            };
+
+            // Couleur de fond doux pour cellule tableau
+            const cellBg = (color, val) => val > 0 ? color + "18" : "transparent";
+
+            return (
+                <div style={{ padding:"0 24px 40px", maxWidth:"1100px", margin:"0 auto" }}>
+
+                    {/* ── HEADER ── */}
+                    <div style={{ textAlign:"center", padding:"30px 0 20px" }}>
+                        <h2 style={{ fontSize:"26px", fontWeight:"800", margin:"0 0 6px", color:"#1a237e" }}>
+                            Bilan {year} — {currentUser ? `${currentUser.prenom} ${currentUser.nom}` : ""}
+                        </h2>
+                        <p style={{ color:"#888", margin:"0 0 14px", fontSize:"14px" }}>
+                            Récapitulatif de toutes vos activités sur l'année
+                        </p>
+                        <select value={year} onChange={(e) => setYear(parseInt(e.target.value))}
+                                style={{ padding:"10px 16px", borderRadius:"10px", fontSize:"15px" }}>
+                            {[2024,2025,2026,2027].map(y => <option key={y} value={y}>{y}</option>)}
+                        </select>
+                    </div>
+
+                    {/* ── CARTES ── */}
+                    <div className="bilan-grid">
+                        {bilanCards.map(card => {
+                            const pct   = Math.min(100, Math.round((card.value / card.max) * 100));
+                            const alert = getAlert(card.value, card.max);
+                            return (
+                                <div key={card.label} className="bilan-card"
+                                     style={{ borderTop:`4px solid ${card.color}` }}>
+
+                                    {/* Alerte */}
+                                    {alert && (
+                                        <div className="bilan-card-alert"
+                                             style={{ background: alert.bg, color: alert.color }}>
+                                            ⚠ {alert.text}
+                                        </div>
+                                    )}
+
+                                    {/* Icône grande en fond */}
+                                    <div className="bilan-card-bg-icon">{card.icon}</div>
+
+                                    {/* Icône + label */}
+                                    <div style={{ display:"flex", alignItems:"center", gap:"8px" }}>
+                                        <span className="bilan-card-icon">{card.icon}</span>
+                                        <span className="label">{card.label}</span>
+                                    </div>
+
+                                    {/* Valeur */}
+                                    <div className="value" style={{ color: card.color }}>
+                                        {card.value}
+                                        <span className="value-unit">j</span>
+                                    </div>
+
+                                    {/* Barre de progression */}
+                                    <div className="progress-bar-bg">
+                                        <div className="progress-bar-fill"
+                                             style={{ width: pct + "%", background: card.color }} />
+                                    </div>
+
+                                    <div className="sublabel">{pct}% du plafond ({card.max}j)</div>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    {/* ── TABLEAU MOIS PAR MOIS ── */}
+                    <div style={{ marginTop:"40px" }}>
+                        <h3 style={{ fontSize:"18px", fontWeight:"700", color:"#1a237e", margin:"0 0 4px" }}>
+                            📅 Détail mois par mois
+                        </h3>
+                        <p style={{ color:"#aaa", fontSize:"13px", margin:"0 0 0" }}>
+                            Nombre de jours par catégorie chaque mois
+                        </p>
+                    </div>
+
+                    <table className="month-table">
+                        <thead>
+                        <tr>
+                            <th style={{ textAlign:"left", paddingLeft:"16px" }}>Mois</th>
+                            <th>💻 TT</th>
+                            <th>🏖️ Congés</th>
+                            <th>🟡 RTT</th>
+                            <th>🤒 Maladie</th>
+                            <th>📚 Formation</th>
+                            <th>⚫ OFF</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {monthlyStats.length > 0 ? monthlyStats.map((ms, idx) => {
+                            const tt  = ms.TT || 0;
+                            const cx  = (ms.CX || 0) + (ms.C4 || 0);
+                            const rtt = (ms.RJ || 0) + (ms.R2 || 0);
+                            const ma  = ms.MA || 0;
+                            const fo  = (ms.FO || 0) + (ms.FJ || 0);
+                            const zz  = ms.ZZ || 0;
+                            const isCurrentMonth = ms.month === month && year === new Date().getFullYear();
+
+                            return (
+                                <tr key={ms.month} style={{
+                                    background: isCurrentMonth ? "#f0f4ff" : (idx % 2 === 0 ? "white" : "#fafbff")
+                                }}>
+                                    <td className="month-name" style={{
+                                        fontWeight: isCurrentMonth ? "700" : "600",
+                                        color: isCurrentMonth ? "#2962ff" : "#333"
+                                    }}>
+                                        {isCurrentMonth && <span style={{ marginRight:"6px", fontSize:"10px", background:"#2962ff", color:"white", borderRadius:"4px", padding:"1px 6px" }}>EN COURS</span>}
+                                        {MONTHS[ms.month - 1]}
+                                    </td>
+                                    <td style={{ background: cellBg("#2962ff", tt) }}>
+                                        {tt ? <span className="badge" style={{background:"#2962ff"}}>{tt}j</span> : <span style={{color:"#ddd"}}>—</span>}
+                                    </td>
+                                    <td style={{ background: cellBg("#00c853", cx) }}>
+                                        {cx ? <span className="badge" style={{background:"#00c853"}}>{cx}j</span> : <span style={{color:"#ddd"}}>—</span>}
+                                    </td>
+                                    <td style={{ background: cellBg("#f9a800", rtt) }}>
+                                        {rtt ? <span className="badge" style={{background:"#f9a800", color:"#333"}}>{rtt}j</span> : <span style={{color:"#ddd"}}>—</span>}
+                                    </td>
+                                    <td style={{ background: cellBg("#8e24aa", ma) }}>
+                                        {ma ? <span className="badge" style={{background:"#8e24aa"}}>{ma}j</span> : <span style={{color:"#ddd"}}>—</span>}
+                                    </td>
+                                    <td style={{ background: cellBg("#fb8c00", fo) }}>
+                                        {fo ? <span className="badge" style={{background:"#fb8c00"}}>{fo}j</span> : <span style={{color:"#ddd"}}>—</span>}
+                                    </td>
+                                    <td style={{ background: cellBg("#546e7a", zz) }}>
+                                        {zz ? <span className="badge" style={{background:"#546e7a"}}>{zz}j</span> : <span style={{color:"#ddd"}}>—</span>}
+                                    </td>
+                                </tr>
+                            );
+                        }) : (
+                            <tr><td colSpan="7" style={{ color:"#aaa", padding:"30px" }}>Chargement...</td></tr>
+                        )}
+
+                        {/* LIGNE TOTAL */}
+                        {monthlyStats.length > 0 && (
+                            <tr className="total-row">
+                                <td style={{ textAlign:"left", paddingLeft:"16px", letterSpacing:"1px", fontSize:"12px" }}>
+                                    TOTAL ANNUEL
+                                </td>
+                                <td>{totalTT}j</td>
+                                <td>{totalCX}j</td>
+                                <td>{totalRTT}j</td>
+                                <td>{totalMA}j</td>
+                                <td>{totalFO}j</td>
+                                <td>{totalZZ}j</td>
+                            </tr>
+                        )}
+                        </tbody>
+                    </table>
+
+                </div>
+            );
+        };
+
+        // ─── RENDU PRINCIPAL ──────────────────────────────────────────────────────
+        return (
+            <div>
+                <div style={{
+                    background:"white", padding:"15px 30px", display:"flex", alignItems:"center",
+                    justifyContent:"space-between", boxShadow:"0 2px 12px rgba(0,0,0,0.08)",
+                    position:"sticky", top:0, zIndex:100
+                }}>
+                    <span style={{ fontWeight:"bold", fontSize:"16px", color:"#2962ff" }}>
+                        📋 Planning App
+                    </span>
+
+                    <div className="nav-tabs" style={{ margin:0 }}>
+                        <button className={"nav-tab " + (activePage === "planning" ? "active" : "inactive")}
+                                onClick={() => setActivePage("planning")}>
+                            📅 Planning
+                        </button>
+                        <button className={"nav-tab " + (activePage === "bilan" ? "active" : "inactive")}
+                                onClick={() => setActivePage("bilan")}>
+                            📆 Bilan Annuel
+                        </button>
+                        <button className={"nav-tab " + (activePage === "team" ? "active" : "inactive")}
+                                onClick={() => setActivePage("team")}>
+                            👥 Équipe
+                        </button>
+                    </div>
+
+                    <div style={{ display:"flex", alignItems:"center", gap:"12px" }}>
+                        {currentUser?.role === "ADMIN" && (
+                            <a href="/admin.html" style={{
+                                padding:"8px 16px", borderRadius:"10px",
+                                background:"#1a237e", color:"white",
+                                fontWeight:"bold", fontSize:"13px",
+                                textDecoration:"none", display:"flex", alignItems:"center", gap:"6px"
+                            }}>
+                                ⚙️ Administration
+                            </a>
+                        )}
+                        <span style={{ fontSize:"14px", color:"#666" }}>
+                            👤 {currentUser ? `${currentUser.prenom} ${currentUser.nom}` : ""}
+                        </span>
+                        <button onClick={() => {
+                            fetch("/api/auth/logout", { method:"POST", credentials:"include" })
+                                .finally(() => { setIsLogged(false); setEmail(""); setEquipe(""); setCurrentUser(null); setLoginEmail(""); });
+                        }} style={{ padding:"7px 14px", fontSize:"13px", borderRadius:"8px", background:"#f5f5f5", color:"#666", border:"1px solid #e0e0e0", boxShadow:"none" }}>
+                            Déconnexion
+                        </button>
+                    </div>
+                </div>
+
+                {activePage === "planning" && <VuePlanning />}
+                {activePage === "bilan"    && <VueBilan />}
+                {activePage === "team"     && (
+                    <Team
+                        equipe={equipe}
+                        year={year}
+                        month={month}
+                        getColor={getColor}
+                        users={users}
+                    />
+                )}
+            </div>
+        );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+
+</script>
+</body>
+</html>
