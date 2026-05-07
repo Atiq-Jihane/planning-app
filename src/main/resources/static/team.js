@@ -38,10 +38,14 @@ window.Team = function(props) {
 
     React.useEffect(() => {
         if (!equipe) return;
-        fetch(`http://localhost:8080/planning/team?equipe=${equipe}&year=${year}&month=${month}`)
+
+        const API_URL = window.location.origin;
+
+        fetch(`${API_URL}/planning/team?equipe=${equipe}&year=${year}&month=${month}`)
             .then(res => res.json())
             .then(data => setTeamPlanning(data))
             .catch(err => console.error("Erreur team planning:", err));
+
     }, [equipe, year, month]);
 
     const daysInMonth = new Date(year, month, 0).getDate();
