@@ -366,15 +366,12 @@ function AdminApp() {
                     <span className="topbar-badge">Admin</span>
                 </div>
                 <div style={{ display:"flex", alignItems:"center", gap:"16px" }}>
-                    <span style={{ fontSize:"13px", color:"#64748b" }}>
-                        👤 {session.prenom} {session.nom}
-                    </span>
+    <span style={{ fontSize:"13px", color:"#64748b" }}>
+        👤 {session.prenom} {session.nom}
+    </span>
                     <a href="react.html" style={{ color:"#64748b", fontSize:"13px", textDecoration:"none" }}>
                         ← Planning
                     </a>
-                    <button className="btn-logout" onClick={handleLogout}>
-                        Déconnexion
-                    </button>
                 </div>
             </div>
             <AdminDashboard />
