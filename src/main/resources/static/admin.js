@@ -102,6 +102,7 @@ function Drawer({ open, onClose, onAdd, users, equipesDispo }) {
     const [email,        setEmail]        = React.useState("");
     const [equipe,       setEquipe]       = React.useState("");
     const [equipeCustom, setEquipeCustom] = React.useState("");
+    const [role,         setRole]         = React.useState("USER");
     const [loading,      setLoading]      = React.useState(false);
     const [error,        setError]        = React.useState("");
     const [closing,      setClosing]      = React.useState(false);
@@ -125,6 +126,7 @@ function Drawer({ open, onClose, onAdd, users, equipesDispo }) {
         if (open) {
             setPrenom(""); setNom(""); setEmail("");
             setEquipe(""); setEquipeCustom(""); setError("");
+            setRole("USER");
         }
     }, [open]);
 
@@ -140,7 +142,7 @@ function Drawer({ open, onClose, onAdd, users, equipesDispo }) {
         fetch("/users", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ prenom, nom, email, equipe: equipeFinale })
+            body: JSON.stringify({ prenom, nom, email, equipe: equipeFinale, role })
         })
             .then(r => { if (!r.ok) throw new Error(); return r.json(); })
             .then(() => {
@@ -206,6 +208,14 @@ function Drawer({ open, onClose, onAdd, users, equipesDispo }) {
                         </div>
                     )}
 
+                    <div className="form-group">
+                        <label>Rôle *</label>
+                        <select value={role} onChange={e => setRole(e.target.value)}>
+                            <option value="USER">👤 User</option>
+                            <option value="ADMIN">🔐 Admin</option>
+                        </select>
+                    </div>
+
                     {error && <div className="error-msg">⚠ {error}</div>}
 
                     {(prenom || nom) && (
@@ -222,14 +232,23 @@ function Drawer({ open, onClose, onAdd, users, equipesDispo }) {
                                 </div>
                                 {email && <div style={{ fontSize:"11px", color:"#64748b", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{email}</div>}
                             </div>
-                            {equipeFinale && (
+                            <div style={{ display:"flex", flexDirection:"column", gap:"4px", alignItems:"flex-end", flexShrink:0 }}>
+                                {equipeFinale && (
+                                    <span className="pill" style={{
+                                        background: avatarColor(equipesDispo.indexOf(equipeFinale)),
+                                        fontSize:"10px", padding:"2px 8px"
+                                    }}>
+                                        {equipeFinale}
+                                    </span>
+                                )}
                                 <span className="pill" style={{
-                                    background: avatarColor(equipesDispo.indexOf(equipeFinale)),
-                                    fontSize:"10px", padding:"2px 8px", flexShrink:0
+                                    background: role === "ADMIN" ? "linear-gradient(135deg,#ef4444,#dc2626)" : "rgba(255,255,255,0.08)",
+                                    color: role === "ADMIN" ? "white" : "#64748b",
+                                    fontSize:"10px", padding:"2px 8px"
                                 }}>
-                                    {equipeFinale}
+                                    {role}
                                 </span>
-                            )}
+                            </div>
                         </div>
                     )}
                 </div>
@@ -245,8 +264,6 @@ function Drawer({ open, onClose, onAdd, users, equipesDispo }) {
 }
 
 // ─── APP PRINCIPALE ───────────────────────────────────────────────────────────
-// L'auth se fait via POST /api/auth/login avec l'email uniquement.
-// ─────────────────────────────────────────────────────────────────────────────
 function AdminApp() {
     const [session,    setSession]    = React.useState(null);
     const [checking,   setChecking]   = React.useState(true);
@@ -255,7 +272,6 @@ function AdminApp() {
     const [shake,      setShake]      = React.useState(false);
     const [loading,    setLoading]    = React.useState(false);
 
-    // ── Vérifier si une session existe déjà (rechargement de page) ──
     React.useEffect(() => {
         fetch("/api/auth/me", { credentials: "include" })
             .then(r => r.ok ? r.json() : null)
@@ -272,7 +288,7 @@ function AdminApp() {
             method: "POST",
             credentials: "include",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: loginEmail })  // ← email uniquement, comme team.html
+            body: JSON.stringify({ email: loginEmail })
         })
             .then(r => r.json().then(data => ({ ok: r.ok, data })))
             .then(({ ok, data }) => {
@@ -296,15 +312,6 @@ function AdminApp() {
             .finally(() => setLoading(false));
     };
 
-    const handleLogout = () => {
-        fetch("/api/auth/logout", { method: "POST", credentials: "include" })
-            .finally(() => {
-                setSession(null);
-                setLoginEmail("");
-            });
-    };
-
-    // ── Chargement initial ──
     if (checking) {
         return (
             <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", color:"#475569" }}>
@@ -313,7 +320,6 @@ function AdminApp() {
         );
     }
 
-    // ── Formulaire de connexion ──
     if (!session) {
         return (
             <div className="login-wrap">
@@ -357,7 +363,6 @@ function AdminApp() {
         );
     }
 
-    // ── Dashboard admin ──
     return (
         <div>
             <div className="topbar">
@@ -366,9 +371,9 @@ function AdminApp() {
                     <span className="topbar-badge">Admin</span>
                 </div>
                 <div style={{ display:"flex", alignItems:"center", gap:"16px" }}>
-    <span style={{ fontSize:"13px", color:"#64748b" }}>
-        👤 {session.prenom} {session.nom}
-    </span>
+                    <span style={{ fontSize:"13px", color:"#64748b" }}>
+                        👤 {session.prenom} {session.nom}
+                    </span>
                     <a href="react.html" style={{ color:"#64748b", fontSize:"13px", textDecoration:"none" }}>
                         ← Planning
                     </a>
